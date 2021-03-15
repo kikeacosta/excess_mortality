@@ -132,8 +132,7 @@ cts <- unique(db_de$PopCode) %>% sort()
 sxs <- unique(db_de$Sex)
 ags <- unique(db_de$Age)
 # cts <- c("CHL", "CZE", "DEUTNP", "USA", "KOR")
-
-c <- "DEUTNP"
+c <- "USA"
 a <- 45
 s <- "m"
 db_blns_all <- NULL

@@ -113,6 +113,11 @@ select <- dplyr::select
 # setting cores use for parallel processing
 registerDoParallel(cores = 6)
 
+# creating directories to locally store partial results that do not sync with github
+if (!dir.exists(here("Figures"))){
+  dir.create(here("Figures"))
+}
+
 if (!dir.exists(here("Figures","baseline_by_country"))){
   dir.create(here("Figures","baseline_by_country"))
 }
@@ -123,7 +128,7 @@ if (!dir.exists(here("Output","baseline_by_country"))){
 
 # starting year of observation
 ym <- 2010
-cts <- unique(db_de$PopCode)
+cts <- unique(db_de$PopCode) %>% sort()
 sxs <- unique(db_de$Sex)
 ags <- unique(db_de$Age)
 # cts <- c("CHL", "CZE", "DEUTNP", "USA", "KOR")

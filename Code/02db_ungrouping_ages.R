@@ -1,6 +1,3 @@
-Sys.setenv(LANG = "en")
-Sys.setlocale("LC_ALL","English")
-
 library(here)
 source(here("Code/00_functions.R"))
 
@@ -55,7 +52,7 @@ db_d2 <- db_d %>%
   select(-Access, -Type) %>% 
   mutate(Age = ifelse(Age == "Unknown", "UNK", Age),
          # provisional fix of missing values in Austria!!!!!!!!!!
-         PopCode = ifelse(is.na(PopCode), "AUT", PopCode),
+         # PopCode = ifelse(is.na(PopCode), "AUT", PopCode),
          Week = ifelse(is.na(Week), "UNK", Week)) %>% 
   group_by(PopCode, Year, Week, Sex) %>% 
   # scale TOT
@@ -223,7 +220,7 @@ stmf_out <-
              stmf$Week,
              stmf$Sex),
         drop = TRUE) %>%
-  parallelsugar::mclapply(try_harmonize_age_p, Offsets = Offsets, mc.cores = 6)
+  parallelsugar::mclapply(try_harmonize_age_p, Offsets = Offsets, mc.cores = 20)
 end_time <- Sys.time()
 end_time - start_time
 

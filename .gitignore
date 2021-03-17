@@ -30,6 +30,7 @@ Data/WPP2019_INT_F03_2_POPULATION_BY_AGE_ANNUAL_MALE.xlsx
 Data/WPP2019_INT_F03_3_POPULATION_BY_AGE_ANNUAL_FEMALE.xlsx
 Data/deprecated
 
+Output/deliverables
 Output/single_ests
 Output/pop_interpol_week_age1.rds
 Output/db_for_baseline_monthly_age5.rds

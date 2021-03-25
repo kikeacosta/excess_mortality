@@ -118,10 +118,8 @@ db_ages2 <- db_d4 %>%
   group_by(PopCode, AgeGroups, Age, Sex) %>% 
   mutate(periods = sum(n())) %>% 
   ungroup() %>% 
-  select(PopCode, X, Age, periods) %>% 
-  unique() %>% 
-  group_by(PopCode) %>% 
-  mutate(group = n())
+  select(PopCode, AgeGroups, periods, Age) %>% 
+  unique() 
 
 db_ages2 %>% 
   group_by(PopCode) %>% 

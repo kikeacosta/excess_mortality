@@ -19,20 +19,6 @@ for(i in 1:length(zipdf$Name)){
 test <- db_d %>% 
   mutate(id = 1:n())
 
-# Pending to add the US data!!
-# # loading US data from CDC
-# usa <- read_csv("https://data.cdc.gov/api/views/y5bj-9g5w/rows.csv?accessType=DOWNLOAD&bom=true&format=true%20target=")
-# usa2 <- usa %>% 
-#   rename(Date = 2,
-#          Age = 6,
-#          Deaths = 7) %>% 
-#   group_by(Date, Age) %>% 
-#   summarise(Deaths = sum(Deaths)) %>% 
-#   ungroup() %>% 
-#   mutate(Date = mdy(Date),
-#          Age = ifelse(str_detect(Age, "Under"), "0", str_sub(Age, 1, 2))) %>% 
-#   drop_na()
-
 # info on country names and codes
 ctr_codes <- read_csv(here("Data/country_codes.csv")) %>% 
   select(Country, PopCode)
@@ -51,8 +37,6 @@ unique(Offsets$Country)
 db_d2 <- db_d %>% 
   select(-Access, -Type) %>% 
   mutate(Age = ifelse(Age == "Unknown", "UNK", Age),
-         # provisional fix of missing values in Austria!!!!!!!!!!
-         # PopCode = ifelse(is.na(PopCode), "AUT", PopCode),
          Week = ifelse(is.na(Week), "UNK", Week)) %>% 
   group_by(PopCode, Year, Week, Sex) %>% 
   # scale TOT

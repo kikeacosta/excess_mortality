@@ -121,6 +121,30 @@ pad_offsets <- function(chunk){
   chunk
 }
 
+# Assign the same age groups to exposures as original ages in mortality data
+assign_age_intervals <- function(ct){
+  
+  int <- deaths %>% 
+    filter(Country == ct) %>% 
+    pull(Age) %>% 
+    unique()
+  
+  if(max(int) <= 110){
+    int <- c(int, 110)
+  }
+  
+  labs <- int[1:length(int)-1]
+  
+  pop_int <- pop %>% 
+    filter(Country == ct) %>% 
+    mutate(Age_int = cut(Age, breaks = int, include.lowest = TRUE, right = FALSE, labels = labs),
+           Age_int = as.numeric(as.character(Age_int)))
+  
+}
+
+
+
+
 # Adjustments to STMF inputs
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # data prep function preamble
@@ -362,8 +386,12 @@ fit_baseline <- function(db2) {
     # Negative binomial (accounting for overdispersion)
     base_nb <- try(MASS::glm.nb(Deaths ~ splines::ns(t, 3) + sn52 + cs52 + offset(log(Exposure)), 
                                 data = db_bline), silent = T)
+    # statistical significance of overdispersion parameter
     ov_sign <- try(base_nb$theta / base_nb$SE.theta > 1.96, silent = T)
-    if (class(base_nb)[1] == "try-error" | is.na(ov_sign)) {
+    # Conversion of the model (if it does not reach the limit of alterations)
+    converged <- length(base_nb$th.warn) == 0
+    
+    if (class(base_nb)[1] == "try-error" | is.na(ov_sign) | !converged) {
       base_nb$aic <- base_po$aic
       base_nb$converged <- F
       ov_sign <- F
@@ -386,7 +414,10 @@ fit_baseline <- function(db2) {
     base_nb <- try(MASS::glm.nb(Deaths ~ splines::ns(t, 3) + offset(log(Exposure)), 
                                 data = db_bline), silent = T)
     ov_sign <- try(base_nb$theta / base_nb$SE.theta > 1.96, silent = T)
-    if (class(base_nb)[1] == "try-error" | is.na(ov_sign)) {
+    # Conversion of the model (if it does not reach the limit of alterations)
+    converged <- length(base_nb$th.warn) == 0
+    
+    if (class(base_nb)[1] == "try-error" | is.na(ov_sign) | !converged) {
       base_nb$aic <- base_po$aic
       base_nb$converged <- F
       ov_sign <- F

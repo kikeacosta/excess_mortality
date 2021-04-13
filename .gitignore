@@ -30,6 +30,9 @@ Data/WPP2019_INT_F03_1_POPULATION_BY_AGE_ANNUAL_BOTH_SEXES.xlsx
 Data/WPP2019_INT_F03_2_POPULATION_BY_AGE_ANNUAL_MALE.xlsx
 Data/WPP2019_INT_F03_3_POPULATION_BY_AGE_ANNUAL_FEMALE.xlsx
 Data/deprecated
+Data/mexico_deaths.zip
+Data/peru_deaths.zip
+
 
 Output/deliverables
 Output/single_ests
@@ -67,8 +70,10 @@ Output/pop_interpol_week_age5.rds
 Output/stmf.rds
 Output/stmf_std.rds
 Output/deaths_stmf_age5.rds
+Output/input_weekly_deaths.rds
 
 Code/210110_Rcode_excess.zip
 Code/examples
 Code/deprecated
+Code/temporal_store
 

@@ -1,33 +1,23 @@
 library(here)
 source(here("Code/00_functions.R"))
 
-
-# downloading the last version of STMF Mortality input data zip 
-download.file("https://www.mortality.org/Public/STMF/Inputs/STMFinput.zip", here("Data/STMFinput.zip"))
-zipdf <- unzip(here("Data/STMFinput.zip"), list = TRUE)
-
-# loading all cause deaths from all countries in STMF
-db_d <- tibble()
-for(i in 1:length(zipdf$Name)){
-  csv_file <- zipdf$Name[i]
-  print(csv_file)
-  temp <- read_csv(unz(here("Data/STMFinput.zip"), csv_file))
-  db_d <- db_d %>% 
-    bind_rows(temp)
-}
-
-test <- db_d %>% 
-  mutate(id = 1:n())
-
 # info on country names and codes
-ctr_codes <- read_csv(here("Data/country_codes.csv")) %>% 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ctr_codes <- read_csv(here("Data", "country_codes.csv")) %>% 
   select(Country, PopCode)
 
-# loading exposures from the wpp estimates
+
+# loading exposures from the WPP estimates
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Offsets <- read_rds(here("Output", "annual_exposures_stmf.rds")) %>% 
   rename(Population = Pop)
 
 unique(Offsets$Country)
+
+
+# Loading weekly mortality data
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+db_d <- read_rds(here("Output", "input_weekly_deaths.rds"))
 
 
 # preparing mortality data
@@ -35,7 +25,6 @@ unique(Offsets$Country)
 
 # distributing deaths at unknown weeks and ages
 db_d2 <- db_d %>% 
-  select(-Access, -Type) %>% 
   mutate(Age = ifelse(Age == "Unknown", "UNK", Age),
          Week = ifelse(is.na(Week), "UNK", Week)) %>% 
   group_by(PopCode, Year, Week, Sex) %>% 
@@ -78,9 +67,9 @@ unique(db_d4$Age) %>% sort()
 unique(db_d4$Sex)
 unique(db_d4$Country)
 
-write_rds(db_d4, here("Output", "stmf_std.rds"))
+write_rds(db_d4, here("Output", "weekly_std.rds"))
 
-db_d4 <- read_rds(here("Output", "stmf_std.rds"))
+db_d4 <- read_rds(here("Output", "weekly_std.rds"))
 
 # selecting countries that need age harmonization
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -222,6 +211,7 @@ stmf_out3 <- stmf_out2 %>%
 db_ok2 <- db_ok %>%
   select(Country, PopCode, Year, Week, Sex, Age, Deaths) %>% 
   mutate(Source = "Original")
+
 
 # appending populations originally in 5 years with those ungrouped
 db_deaths <- bind_rows(db_ok2, stmf_out3) %>% 

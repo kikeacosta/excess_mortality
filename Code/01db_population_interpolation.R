@@ -4,7 +4,7 @@
 library(here)
 source(here("Code/00_functions.R"))
 
-
+# countries to be included (STMF codes and names)
 ctr_codes <- read_csv(here("Data", "country_codes.csv"))
 
 # If the file with population interpolarion exists, dont run the script
@@ -12,16 +12,13 @@ if (!file.exists(here("Output", "pop_interpol_week_age5.rds")) |
     !file.exists(here("Output", "annual_exposures_stmf.rds"))){
   
   
-  # Country names and codes 
-  #########################
-  pcodes <- unzip(here("Data", "STMFinput.zip"), list = TRUE) %>% 
-    mutate(Name2 = str_replace(Name, "stmf.csv", "")) %>% 
-    dplyr::pull(Name2)
+  # Country WPP names and codes 
+  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  pcodes <- ctr_codes %>% 
+    dplyr::pull(PopCode)
   
   ctrs <- ctr_codes %>% 
-    filter(PopCode %in% c(pcodes, "GBR")) %>% 
-    drop_na() %>% 
-    dplyr::pull(wpp_code)
+    dplyr::pull(wpp_name)
   
   
   # loading "Annual and single age data" population estimates 
@@ -31,16 +28,16 @@ if (!file.exists(here("Output", "pop_interpol_week_age5.rds")) |
   #########################################################################
   
   # female and male estimates stored in the OSF project
-  osf_retrieve_file("wxpdz") %>%
+  osf_retrieve_file("eqk3r") %>%
     osf_download(conflicts = "overwrite",
                  path = "Data")
   
-  osf_retrieve_file("tn4zh") %>%
+  osf_retrieve_file("pcnsf") %>%
     osf_download(conflicts = "overwrite",
                  path = "Data") 
   
   # filtering the countries in the STMF
-  pop_m <- read_xlsx(unzip(here("Data", "wpp_m.zip")),
+  pop_m <- read_xlsx(here("Data", "WPP2019_INT_F03_2_POPULATION_BY_AGE_ANNUAL_MALE.xlsx"),
                      skip = 16) %>% 
     select(3, 8:109) %>% 
     rename(Country = 1, 
@@ -51,7 +48,7 @@ if (!file.exists(here("Output", "pop_interpol_week_age5.rds")) |
     mutate(Age = as.integer(Age),
            Sex = "m")
   
-  pop_f <- read_xlsx(unzip(here("Data", "wpp_f.zip")),
+  pop_f <- read_xlsx(here("Data", "WPP2019_INT_F03_3_POPULATION_BY_AGE_ANNUAL_FEMALE.xlsx"),
                      skip = 16) %>% 
     select(3, 8:109) %>% 
     rename(Country = 1, 
@@ -62,12 +59,6 @@ if (!file.exists(here("Output", "pop_interpol_week_age5.rds")) |
     mutate(Age = as.integer(Age),
            Sex = "f")
   
-  # clear downloaded files from disk
-  file.remove(here("wpp_f.xlsx"), 
-              here("wpp_m.xlsx"),
-              here("Data", "wpp_f.zip"), 
-              here("Data", "wpp_m.zip"))
-  
   # original population data in thousands, converting it to counts
   pop_wpp <- bind_rows(pop_m, pop_f) %>% 
     mutate(Pop = as.numeric(Pop) * 1000) 
@@ -75,8 +66,8 @@ if (!file.exists(here("Output", "pop_interpol_week_age5.rds")) |
   unique(pop_wpp$Country) %>% sort()
   
   # loading annual and single-year of age population estimates from the HMD
-  # for England, Wales, Scotland, Northern Ireland, and Taiwan 
-  #########################################################################
+  # for England and Wales, Scotland, and Northern Ireland 
+  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
   HMDcountries <- c("GBR_NIR", "GBR_SCO", "GBRTENW")
   countries <- ctr_codes %>% 

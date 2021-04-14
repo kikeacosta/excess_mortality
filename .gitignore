@@ -7,7 +7,6 @@
 .RData
 .Ruserdata
 
-STMFinput.zip
 backup
 Analyses
 
@@ -17,7 +16,6 @@ Figures/deprecated
 Figures/summary
 Figures/yll_paper
 
-Data/STMFinput.zip
 Data/201118_STMFinput.zip
 Data/Output_5.zip
 Data/France_micro
@@ -26,14 +24,12 @@ Data/STMFinput/
 Data/backup
 Data/US_Weekly_counts_of_deaths_by_jurisdiction_and_age_group.csv
 Data/stmf.xlsx
-Data/STMFinput.zip
 Data/WPP2019_INT_F03_1_POPULATION_BY_AGE_ANNUAL_BOTH_SEXES.xlsx
 Data/WPP2019_INT_F03_2_POPULATION_BY_AGE_ANNUAL_MALE.xlsx
 Data/WPP2019_INT_F03_3_POPULATION_BY_AGE_ANNUAL_FEMALE.xlsx
 Data/deprecated
 Data/mexico_deaths.zip
 Data/peru_deaths.zip
-
 
 Output/deliverables
 Output/single_ests

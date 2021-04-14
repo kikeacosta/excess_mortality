@@ -11,7 +11,7 @@ ctr_codes <- read_csv(here("Data", "country_codes.csv")) %>%
 # ~~~~~~~~~~~~~~~~~
 
 # downloading the last version of STMF Mortality input data zip 
-# this version as of 12 March 2021
+# this version as of 15 March 2021
 # download.file("https://www.mortality.org/Public/STMF/Inputs/STMFinput.zip", here("Data/STMFinput.zip"))
 
 # list of country codes in STMF

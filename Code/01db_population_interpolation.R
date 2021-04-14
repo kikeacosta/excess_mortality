@@ -36,18 +36,7 @@ if (!file.exists(here("Output", "pop_interpol_week_age5.rds")) |
     osf_download(conflicts = "overwrite",
                  path = "Data") 
   
-  # filtering the countries in the STMF
-  pop_m <- read_xlsx(here("Data", "WPP2019_INT_F03_2_POPULATION_BY_AGE_ANNUAL_MALE.xlsx"),
-                     skip = 16) %>% 
-    select(3, 8:109) %>% 
-    rename(Country = 1, 
-           Year = 2) %>% 
-    filter(Country %in% ctrs, 
-           Year >= 2000) %>% 
-    gather(-Country, -Year, key = "Age", value = "Pop") %>% 
-    mutate(Age = as.integer(Age),
-           Sex = "m")
-  
+  # filtering the countries in which mortality is available
   pop_f <- read_xlsx(here("Data", "WPP2019_INT_F03_3_POPULATION_BY_AGE_ANNUAL_FEMALE.xlsx"),
                      skip = 16) %>% 
     select(3, 8:109) %>% 
@@ -58,6 +47,17 @@ if (!file.exists(here("Output", "pop_interpol_week_age5.rds")) |
     gather(-Country, -Year, key = "Age", value = "Pop") %>% 
     mutate(Age = as.integer(Age),
            Sex = "f")
+  
+  pop_m <- read_xlsx(here("Data", "WPP2019_INT_F03_2_POPULATION_BY_AGE_ANNUAL_MALE.xlsx"),
+                     skip = 16) %>% 
+    select(3, 8:109) %>% 
+    rename(Country = 1, 
+           Year = 2) %>% 
+    filter(Country %in% ctrs, 
+           Year >= 2000) %>% 
+    gather(-Country, -Year, key = "Age", value = "Pop") %>% 
+    mutate(Age = as.integer(Age),
+           Sex = "m")
   
   # original population data in thousands, converting it to counts
   pop_wpp <- bind_rows(pop_m, pop_f) %>% 
@@ -163,7 +163,7 @@ if (!file.exists(here("Output", "pop_interpol_week_age5.rds")) |
     
     # Visual test
     #############
-    c <- "Austria"
+    c <- "Peru"
     a <- 0
     s <- "f"
     
@@ -205,63 +205,12 @@ if (!file.exists(here("Output", "pop_interpol_week_age5.rds")) |
   # If the file with population interpolarion exists, dont run the script
   if (!file.exists(here("Output", "annual_exposures_stmf.rds"))){
     
-    pop_year <- 
-      bind_rows(pop_hmd, pop_wpp)
+    db_p2 <- 
+      inters_pop3 %>% 
+      filter(Week == 26) %>% 
+      left_join(ctr_codes) %>% 
+      select(PopCode, Country, Year, Sex, Age, Pop)
     
-    # dataframe with weeks by year between 2000 and 2020
-    db_y <- expand_grid(Year = 2000:2021) 
-    ages <- unique(pop_year$Age)
-    ctrs <- unique(pop_year$Country)
-    
-    # c <- "England_Wales"
-    # s <- "m"
-    # a <- 0
-    
-    exters_pop <- tibble()
-    for(c in ctrs){
-      pop_temp1 <- pop_year %>% 
-        filter(Country == c)
-      for(s in c("m", "f")){
-        pop_temp2 <- pop_temp1 %>% 
-          filter(Sex == s)
-        for(a in ages){
-          
-          db_y_temp <- db_y %>% 
-            mutate(Country = c,
-                   Sex = s,
-                   Age = a) %>% 
-            left_join(pop_temp2)
-          
-          db_y_temp2 <- db_y_temp %>% 
-            left_join(exterpop(db_y_temp)) %>% 
-            mutate(Country = c,
-                   Age = a,
-                   Sex = s)
-          
-          exters_pop <- exters_pop %>% 
-            bind_rows(db_y_temp2)
-          
-        }
-      }
-    }
-    
-    c <- "Spain"
-    s <- "f"
-    a <- 80
-    exters_pop %>% 
-      filter(Country == c,
-             Age == a,
-             Sex == s) %>% 
-      ggplot()+
-      geom_line(aes(Year, Pop2), col = "black")+
-      geom_point(aes(Year, Pop), col = "red")
-    
-    db_p2 <- exters_pop %>%
-      select(-Pop) %>% 
-      rename(Pop = Pop2,
-             wpp_code = Country) %>% 
-      left_join(ctr_codes)
-    
-    write_rds(db_p2, here("Output", "annual_exposures_stmf.rds"))
+    write_rds(db_p2, here("Output", "annual_exposures.rds"))
   }
 }

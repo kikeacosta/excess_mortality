@@ -2,7 +2,6 @@
 .Rhistory
 .RData
 .Ruserdata
-
 deprecated
 single_ests
 pop_interpol_week_age1.rds
@@ -22,3 +21,14 @@ pop_interpol_week_age5.rds
 stmf.rds
 stmf_std.rds
 deaths_stmf_age5.rds
+baseline_by_country_orig_ages
+baseline_mortality_orig_ages.rds
+baseline_mortality_original_ages.rds
+cumulative_excess_original_ages_2020_2021.csv
+db_for_baseline_original_ages.rds
+deaths_stmf_original_ages.rds
+peru_mexico_excess.csv
+pop_interpol_week_original_ages.rds
+weekly_deaths_age5.rds
+cumulative_excess_age_2020_2021_pemx.csv
+cumulative_excess_all_ages_2020_2021.csv

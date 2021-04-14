@@ -119,6 +119,20 @@ db_mx2 <-
   filter(Year >= 2016) %>% 
   select(PopCode, Country, Year, Week, Sex, Age, Deaths)
 
+db_mx3 <- 
+  db_mx2 %>% 
+  filter(Age != "UNK",
+         Sex != "UNK",
+         Week != "UNK") %>% 
+  mutate(year_week = paste(Year, Week, sep = "_")) %>% 
+  select(-Year, -Week) %>% 
+  tidyr::complete(year_week, PopCode, Country, Sex, Age, fill = list(Deaths = 0)) %>% 
+  separate(year_week, c("Year", "Week"), sep = "_") %>% 
+  mutate(Year = as.integer(Year)) %>% 
+  bind_rows(db_mx2 %>% 
+              filter(Age == "UNK" | Sex == "UNK" | Week == "UNK")) %>% 
+  arrange(PopCode, Country, Year, suppressWarnings(as.numeric(Week)), Sex, suppressWarnings(as.numeric(Age)))
+
 # Peru mortality data
 # ~~~~~~~~~~~~~~~~~~~
 # files from OSF as of 20 March 2021
@@ -169,11 +183,67 @@ db_pe3 <-
          PopCode = "PER") %>% 
   select(PopCode, Country, Year, Week, Sex, Age, Deaths)
 
+# completing missing values 
+db_pe4 <- 
+  db_pe3 %>% 
+  filter(Age != "UNK",
+         Sex != "UNK",
+         Week != "UNK") %>% 
+  mutate(year_week = paste(Year, Week, sep = "_")) %>% 
+  select(-Year, -Week) %>% 
+  tidyr::complete(year_week, PopCode, Country, Sex, Age, fill = list(Deaths = 0)) %>% 
+  separate(year_week, c("Year", "Week"), sep = "_") %>% 
+  mutate(Year = as.integer(Year)) %>% 
+  bind_rows(db_pe3 %>% 
+              filter(Age == "UNK" | Sex == "UNK" | Week == "UNK")) %>% 
+  arrange(PopCode, Country, Year, suppressWarnings(as.numeric(Week)), Sex, suppressWarnings(as.numeric(Age)))
+
+
+# all sex and all age Peru and Mexico
+db_pe_mx <- 
+  bind_rows(db_pe4,
+            db_mx3) %>% 
+  arrange(PopCode, Country, Year, Week, Sex, suppressWarnings(as.numeric(Age)))
+
+db_pe_mx_all_ages <- 
+  db_pe_mx %>% 
+  group_by(PopCode, Country, Year, Week, Sex) %>% 
+  summarise(Deaths = sum(Deaths)) %>% 
+  ungroup() %>% 
+  mutate(Age = "TOT") %>% 
+  filter(Sex != "UNK")
+
+db_pe_mx_all_sex <- 
+  db_pe_mx %>% 
+  group_by(PopCode, Country, Year, Week, Age) %>% 
+  summarise(Deaths = sum(Deaths)) %>% 
+  ungroup() %>% 
+  mutate(Sex = "b") %>% 
+  filter(Age != "UNK")
+
+db_pe_mx_all_sex_age <- 
+  db_pe_mx_all_sex %>% 
+  group_by(PopCode, Country, Year, Week) %>% 
+  summarise(Deaths = sum(Deaths)) %>% 
+  ungroup() %>% 
+  mutate(Sex = "b",
+         Age = "TOT") %>% 
+  filter(Age != "UNK",
+         Sex != "UNK")
+
+db_pe_mx2 <- 
+  db_pe_mx %>% 
+  filter(Age != "UNK",
+         Sex != "UNK") %>% 
+  bind_rows(db_pe_mx_all_ages,
+            db_pe_mx_all_sex,
+            db_pe_mx_all_sex_age) %>% 
+  arrange(PopCode, Country, Year, suppressWarnings(as.numeric(Week)), Sex, suppressWarnings(as.numeric(Age)))
+
 # Combining all countries
 db_deaths <- 
-  bind_rows(db_pe3,
-            db_mx2,
+  bind_rows(db_pe_mx2,
             db_stmf) %>% 
-  arrange(PopCode, Country, Year, Week, Sex, suppressWarnings(as.numeric(Age)))
+  arrange(PopCode, Country, Year, suppressWarnings(as.numeric(Week)), Sex, suppressWarnings(as.numeric(Age)))
 
 write_rds(db_deaths, here("Output", "input_weekly_deaths.rds"))

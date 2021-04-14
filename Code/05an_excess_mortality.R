@@ -42,8 +42,7 @@ db2 <-
   mutate(Epi_per = ifelse(Deaths >= up, 1, 0),
          Excess_epi = ifelse(Epi_per == 1, Deaths - Baseline, 0),
          Excess_pos = ifelse(Deaths > Baseline, Deaths - Baseline, 0),
-         Excess = Deaths - Baseline,
-         Age = as.character(Age))
+         Excess = Deaths - Baseline)
 
 # Excess mortality since week 8 in 2020 (March 1) 
 db_sum <- 
@@ -69,21 +68,22 @@ cum_age <-
          Exposure = cumsum(Exposure)) %>% 
   arrange(Country, Sex, Age, Date) %>% 
   select(Country, Sex, Age, Date, CumEpi, CumExc, CumPos, Exposure) %>% 
-  ungroup()
-
-cum <- 
-  cum_age %>% 
-  group_by(Country, Date, Sex) %>% 
-  summarise(CumEpi = sum(CumEpi),
-            CumExc = sum(CumExc),
-            CumPos = sum(CumPos),
-            Exposure = sum(Exposure)) %>% 
-  arrange(Country, Sex, Date) %>% 
   ungroup() %>% 
-  mutate(Age = "TOT")
+  mutate()
 
+# cum <- 
+#   cum_age %>% 
+#   group_by(Country, Date, Sex) %>% 
+#   summarise(CumEpi = sum(CumEpi),
+#             CumExc = sum(CumExc),
+#             CumPos = sum(CumPos),
+#             Exposure = sum(Exposure)) %>% 
+#   arrange(Country, Sex, Date) %>% 
+#   ungroup() %>% 
+#   mutate(Age = "TOT")
+# 
 write_csv(cum_age, "Output/cumulative_excess_age_2020_2021.csv")
-write_csv(cum, "Output/cumulative_excess_all_ages_2020_2021.csv")
+# write_csv(cum, "Output/cumulative_excess_all_ages_2020_2021.csv")
 
 
 last_dates <- 

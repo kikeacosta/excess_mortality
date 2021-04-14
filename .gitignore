@@ -72,6 +72,8 @@ Output/stmf.rds
 Output/stmf_std.rds
 Output/deaths_stmf_age5.rds
 Output/input_weekly_deaths.rds
+Output/annual_exposures.rds
+Output/weekly_std.rds
 
 Code/210110_Rcode_excess.zip
 Code/examples

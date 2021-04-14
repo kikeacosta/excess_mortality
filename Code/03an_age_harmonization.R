@@ -9,10 +9,10 @@ ctr_codes <- read_csv(here("Data", "country_codes.csv")) %>%
 
 # loading exposures from the WPP estimates
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Offsets <- read_rds(here("Output", "annual_exposures_stmf.rds")) %>% 
+Offsets <- read_rds(here("Output", "annual_exposures.rds")) %>% 
   rename(Population = Pop)
 
-unique(Offsets$Country)
+unique(Offsets$Country) %>% sort
 
 
 # Loading weekly mortality data
@@ -44,28 +44,27 @@ db_d3 <- db_d2 %>%
   arrange(PopCode, Year, Week, Sex, Age)
 
 db_d4 <- db_d3 %>% 
-  group_by(PopCode, Year, Week) %>% 
-  # scaling sexes to add total deaths
-  do(scale_sexes(chunk = .data)) %>% 
+  filter(Sex != "UNK") %>% 
+  group_by(PopCode, Year, Week, Sex, Age) %>% 
+  summarise(Deaths = sum(Deaths)) %>% 
+  ungroup() %>% 
+  pivot_wider(names_from = Sex,
+              values_from = Deaths) %>% 
+  mutate(m = m / (m + f) * b,
+         f = f / (m + f) * b,
+         m = ifelse(is.nan(m),0,m),
+         f = ifelse(is.nan(f),0,f)) %>% 
+  pivot_longer(m:b, names_to = "Sex", values_to = "Deaths") %>% 
   ungroup() %>% 
   left_join(ctr_codes) %>% 
-  group_by(Country, 
-           Year,
-           Week,
-           Sex) %>% 
-  mutate(AgeInterval = case_when(
-    AgeInterval == "+" ~ as.character(101 - max(Age)),
-    TRUE ~ AgeInterval),
-    AgeInterval = as.integer(AgeInterval)) %>% 
-  rename(AgeInt = AgeInterval) %>% 
-  select(Country, PopCode, Year, Week, Sex, Age, AgeInt, Deaths) %>% 
-  arrange(Country, Year, Week, Sex, Age) %>% 
-  ungroup()
+  arrange(PopCode, Year, Week, Sex, Age) %>% 
+  drop_na(Deaths)
   
+
 unique(db_d4$Week)
 unique(db_d4$Age) %>% sort()
 unique(db_d4$Sex)
-unique(db_d4$Country)
+unique(db_d4$Country) %>% sort
 
 write_rds(db_d4, here("Output", "weekly_std.rds"))
 
@@ -165,7 +164,7 @@ db_to_ungr %>%
          max_year = max(Year),
          weeks = sum(n()))
 
-# AUT, NLD, and SWE have wide age groups only during a the last weeks,
+# AUT, NLD, GBR_NIR, and SWE have wide age groups only during a the last weeks,
 # Deaths during this few weeks could be ungrouped based on previous distributions 
 
 exc_ungr <- c("AUT", "NLD", "SWE", "GBR_NIR")
@@ -176,7 +175,7 @@ stmf <- db_to_ungr %>%
 # ungrouping all ages for those intervals larger than 5-year
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# # for testing with a feww weeks
+# # for testing with a few weeks
 # stmf <- stmf %>%
 #   filter(Country == "Canada",
 #          Sex == "b",
@@ -193,7 +192,7 @@ stmf_out <-
              stmf$Week,
              stmf$Sex),
         drop = TRUE) %>%
-  parallelsugar::mclapply(try_harmonize_age_p, Offsets = Offsets, mc.cores = 20)
+  parallelsugar::mclapply(try_harmonize_age_p, Offsets = Offsets, mc.cores = 6)
 end_time <- Sys.time()
 end_time - start_time
 
@@ -219,7 +218,8 @@ db_deaths <- bind_rows(db_ok2, stmf_out3) %>%
 
 unique(db_deaths$PopCode)
 
-write_rds(db_deaths, here("Output/deaths_stmf_age5.rds"))
+# write_rds(db_deaths, here("Output/deaths_stmf_age5.rds"))
+write_rds(db_deaths, here("Output/weekly_deaths_age5.rds"))
 
 db_deaths %>% 
   mutate(date = ISOweek::ISOweek2date(paste0(Year, "-W", sprintf("%02d",Week), "-7"))) %>% 

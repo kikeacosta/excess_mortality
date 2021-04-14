@@ -3,10 +3,8 @@ source(here("Code/00_functions.R"))
 
 # Creating the master database with weekly deaths and exposures
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-ctr_codes <- read_csv(here("Data", "country_codes.csv")) %>% 
-  mutate(PopCode = ifelse(PopCode == "AUS2", "AUS", PopCode))
-db_d <- read_rds(here("Output", "deaths_stmf_age5.rds")) %>% 
-  mutate(Country = ifelse(Country == "Scothland", "Scotland", Country))
+ctr_codes <- read_csv(here("Data", "country_codes.csv")) 
+db_d <- read_rds(here("Output", "weekly_deaths_age5.rds"))
 db_p <- read_rds(here("Output", "pop_interpol_week_age5.rds"))
 
 unique(db_d$PopCode) %>% sort()
@@ -15,14 +13,9 @@ unique(db_p$Country) %>% sort()
 # Merging mortality data and population estimates
 db_dp <- db_d %>% 
   mutate(Country = ifelse(Country == "USA", "United States", Country)) %>% 
-  left_join(ctr_codes) %>% 
-  mutate(wpp_code = ifelse(is.na(wpp_code), Country, wpp_code)) %>% 
-  select(-Country) %>% 
-  rename(Country = wpp_code) %>% 
   left_join(db_p, by = c("Country", "Year", "Week", "Age", "Sex")) %>% 
   drop_na() %>% 
-  filter(PopCode != "RUS",
-         Year >= 2010)
+  filter(Year >= 2010)
 
 unique(db_dp$PopCode) %>% sort()
 
@@ -34,6 +27,11 @@ heat_waves <- seq(27, 35, 1)
 south_cts <- c("Australia", "Chile", "New Zealand") 
 flu_season_south <- c(seq(21, 42, 1))
 heat_waves_south <- c(seq(1, 7, 1), seq(52, 54, 1))
+# For equatorial Countries
+equat_cts <- c("Peru") 
+# no strong seasonality 
+flu_season_south <- c()
+heat_waves_south <- c()
 # Initial year for baseline estimation
 ym <- 2010
 
@@ -54,10 +52,12 @@ db_de <- db_dp %>%
          # excluding winter and summer weeks, as well as 2009 and COVID-19 pandemics
          include = case_when(Country %in% south_cts &
                                !(Week %in% heat_waves_south | Week %in% flu_season_south) & 
-                               Year < 2020 ~ 1,
+                               !((Year == 2020 & Week >7) | Year == 2021) ~ 1,
                              !(Country %in% south_cts) &
                                !(Week %in% heat_waves | Week %in% flu_season) & 
                                Year < 2020 ~ 1,
+                             Country %in% equat_cts & 
+                               !((Year == 2020 & Week >7) | Year == 2021) ~ 1,
                              TRUE ~ 0),
          include = factor(include)) %>% 
   drop_na()
@@ -72,6 +72,13 @@ gc()
 
 # visual inspection of weeks to include and exclude
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+db_de %>% 
+  filter(Country == "Peru",
+         Age == 80,
+         Sex == "b") %>% 
+  ggplot()+
+  geom_point(aes(t, Deaths, col = include))
+
 db_de %>% 
   filter(PopCode == "GBR_SCO",
          Age == 80,
@@ -135,21 +142,30 @@ ags <- unique(db_de$Age)
 c <- "USA"
 a <- 45
 s <- "m"
-db_blns_all <- NULL
+db_blns_all <- tibble()
 for (c in cts) {
-  db_blns <- NULL
+  db_blns <- tibble()
+  temp <- 
+    db_de %>% 
+    filter(PopCode == c)
+  sxs <- unique(temp$Sex)
+  
   for (s in sxs) {
+    temp2 <- 
+      temp %>% 
+      filter(Sex == s)
+    ags <- unique(temp2$Age)
+    
     for (a in ags) {
       
-      temp <- db_de %>% 
-        filter(PopCode == c,
-               Sex == s,
-               Age == a) %>% 
+      temp3 <- 
+        temp2 %>% 
+        filter(Age == a) %>% 
         select(Year, Week, t, Deaths, Exposure, sn52, cs52, include)
       
       cat(paste(c, s, a, "\n", sep = "_"))
       
-      temp2 <- fit_baseline(temp) %>% 
+      temp4 <- fit_baseline(temp3) %>% 
         mutate(PopCode = c,
                Sex = s,
                Age = a,
@@ -160,11 +176,12 @@ for (c in cts) {
                mx_d = 100000 * Deaths / Exposure) 
       
       db_blns <- db_blns %>% 
-        bind_rows(temp2)
+        bind_rows(temp4)
       
       ## plots of estimates
       ## ~~~~~~~~~~~~~~~~~~
-      temp2 %>%
+      plot_name <- paste0(c, "_", s, "_", a, ".png")
+      temp4 %>%
         ggplot()+
         geom_vline(xintercept = ymd("2020-04-03"), col = "#b80c09", alpha = 0.1, size = 5)+
         geom_line(aes(Date, mx_d), size = 0.4)+
@@ -180,7 +197,7 @@ for (c in cts) {
           axis.text.y = element_text(size=8),
           axis.title.x = element_text(size=10),
           axis.title.y = element_text(size=10))+
-      ggsave(paste0("Figures/baseline_by_country/", c, "_", s, "_", a, ".png"), dpi = 300, width = 6, height = 4)
+        ggsave(here("Figures", "baseline_by_country", plot_name), dpi = 300, width = 6, height = 4)
     }
   }
   db_blns <- db_blns %>% 

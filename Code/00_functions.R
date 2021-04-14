@@ -143,10 +143,8 @@ assign_age_intervals <- function(ct){
 }
 
 
-
-
-# Adjustments to STMF inputs
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Adjustments to weekly deaths inputs
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # data prep function preamble
 dist_unk <- function(chunk){
   if ("UNK" %in% chunk$Age){
@@ -333,8 +331,8 @@ fit_baseline <- function(db2) {
   
   # model fitting evaluation
   # ~~~~~~~~~~~~~~~~~~~~~~~~
-  # evaluate the seasonal parameter with AIC Using 6 difference criteria
-  # of AIC for selecting the best model (Hilbe 2011)
+  # evaluate the seasonal parameter using 6 AIC value difference criteria
+  # for selecting the best model (Hilbe 2011)
   # Cross-validation with trainning and validation subsamples 
   
   # train_base <- db_bline %>% 
@@ -376,7 +374,7 @@ fit_baseline <- function(db2) {
   
   # 
   
-  
+  # evaluating seasonality
   if (no_sea2$aic - sea2$aic > 6) {
     # evaluating for inclusion of overdispersion parameter for seasonal model
     # Poisson model

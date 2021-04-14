@@ -37,11 +37,10 @@ db_stmf <- db_d %>%
 
 # Mexico mortality data
 # ~~~~~~~~~~~~~~~~~~~~~
-# files from OSF as of XXXXX
+# files from OSF (Version 1) as of 15 March 2021 
 osf_retrieve_file("hbxkn") %>%
   osf_download(conflicts = "overwrite",
                path = "Data")
-
 
 mex_files <- unzip(here("Data", "mexico_deaths.zip"), list = TRUE)
 
@@ -135,7 +134,7 @@ db_mx3 <-
 
 # Peru mortality data
 # ~~~~~~~~~~~~~~~~~~~
-# files from OSF as of 20 March 2021
+# files from OSF (Version 1) as of 15 March 2021 
 osf_retrieve_file("wqytu") %>%
   osf_download(conflicts = "overwrite",
                path = "Data")
